@@ -17,14 +17,26 @@ class CartController extends Controller
 
     public function store(Request $request)
     {
-        $userId = $request->user()->id;
-        $cartItem = Cart::create([
-            'user_id' => $userId,
-            'product_id' => $request->product_id,
-            'quantity' => $request->quantity,
-        ]);
 
-        return response()->json($cartItem, 201);
+        try {
+
+            $validated = $request->validate([
+                'product_id' => 'required',
+                'quantity' => 'required|numeric|min:1',
+            ]);
+
+            $userId = $request->userId;
+            $cartItem = Cart::create([
+                'user_id' => $userId,
+                'product_id' => $validated['product_id'],
+                'quantity' => $validated['quantity'],
+            ]);
+
+            return response()->json($cartItem, 201);
+        } catch (\Exception $e) {
+            \Log::error($e->getMessage());
+            return response()->json(['error' => 'Server Error'], 500);
+        }
     }
 
     public function update(Request $request, Cart $cart)

@@ -36,12 +36,17 @@ Route::get('/', function () {
     ]);
 });
 
-
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
+
+
+Route::get('/cart', [CartController::class, 'index']);
+Route::post('/cart', [CartController::class, 'store']);
+Route::put('/cart/{cart}', [CartController::class, 'update']);
+Route::delete('/cart/{cart}', [CartController::class, 'destroy']);
 
 // //Registration and Login 
 // Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/products', [ProductController::class, 'index']);
 //Public Routes
@@ -75,10 +80,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::delete('/product/{id}', [ProductController::class, 'destroy']);
 
-    Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart', [CartController::class, 'store']);
-    Route::put('/cart/{cart}', [CartController::class, 'update']);
-    Route::delete('/cart/{cart}', [CartController::class, 'destroy']);
 
 
     Route::post('/review', [ReviewController::class, 'store']);
@@ -93,8 +94,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/order-details', [OrderDetailController::class, 'store']);
     Route::delete('/order-details/{id}', [OrderDetailController::class, 'destroy']);
 
-
-    Route::get('/payments', [PaymentController::class, 'index']);
     Route::post('/payments', [PaymentController::class, 'store']);
     Route::put('/payments/{id}', [PaymentController::class, 'update']);
     Route::delete('/payments/{id}', [PaymentController::class, 'destroy']);
@@ -103,3 +102,5 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
 
 });
+
+Route::get('/pay/{id}', [PaymentController::class, 'payViaGcash']);

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use App\Models\Product;
 
 class PaymentController extends Controller
 {
@@ -70,5 +72,63 @@ class PaymentController extends Controller
         $payment->delete();
 
         return response()->json(['message' => 'Payment deleted successfully']);
+    }
+    public function payViaGcash(string $prod_id)
+    {
+        $product = Product::where('id', $prod_id)->first();
+
+        $require = [
+            'data' => [
+                'type' => 'checkout_session',
+                'description' => 'Onlineo Shopping Centre',
+                'attributes' => [
+                    'line_items' => [
+                        [
+                            'name' => $product->prod_name,
+                            'quantity' => $product->prod_stock,
+                            'amount' => (int) $product->prod_price,
+                            'currency' => 'PHP',
+                            'description' => $product->prod_description,
+                        ],
+                        [
+                            'name' => $product->prod_name,
+                            'quantity' => $product->prod_stock,
+                            'amount' => (int) $product->prod_price,
+                            'currency' => 'PHP',
+                            'description' => $product->prod_description,
+                        ],
+                        [
+                            'name' => $product->prod_name,
+                            'quantity' => $product->prod_stock,
+                            'amount' => (int) $product->prod_price,
+                            'currency' => 'PHP',
+                            'description' => $product->prod_description,
+                        ],
+                    ],
+                    'statement_descriptor' => 'Payment',
+                    'payment_method_types' => ['gcash'],
+                    'payment_method_allowed' => ['gcash'],
+                    'metadata' => [
+                        'product-id' => $product->id,
+                    ],
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'accept' => 'application/json',
+            'authorization' => 'Basic ' . base64_encode(env('PAYMONGO_SECRET_KEY') . ':'),
+        ])->post('https://api.paymongo.com/v1/checkout_sessions', $require);
+
+        if ($response) {
+            return response()->json([
+                'checkout_url' => $response->json()['data']['attributes']['checkout_url']
+            ], 200);
+
+            // if (isset($data['data']['attributes']['redirect']['checkout_url'])) {
+
+            // }
+        }
     }
 }
