@@ -44,6 +44,7 @@ Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'store']);
 Route::put('/cart/{cart}', [CartController::class, 'update']);
 Route::delete('/cart/{cart}', [CartController::class, 'destroy']);
+Route::get('/my-cart/{id}', [CartController::class, 'getAllProductInCart']);
 
 // //Registration and Login 
 // Route::post('/register', [AuthController::class, 'register']);
