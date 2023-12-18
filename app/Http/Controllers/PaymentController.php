@@ -6,6 +6,7 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Product;
+use App\Models\Cart;
 
 class PaymentController extends Controller
 {
@@ -73,43 +74,35 @@ class PaymentController extends Controller
 
         return response()->json(['message' => 'Payment deleted successfully']);
     }
-    public function payViaGcash(string $prod_id)
+    public function payViaGcash(string $user_id)
     {
-        $product = Product::where('id', $prod_id)->first();
+        $productsInsideMyCart = Cart::where('carts.user_id', $user_id)
+            ->join('product', 'product.id', '=', 'carts.product_id') // Updated the join condition to match the correct columns
+            ->get();
+
+        $lineItems = [];
+        foreach ($productsInsideMyCart as $product) {
+            $lineItems[] = [
+                'name' => $product->prod_name,
+                'quantity' => $product->quantity,
+                'amount' => (int) $product->prod_price * 100,
+                'currency' => 'PHP',
+                'description' => $product->prod_description,
+            ];
+        }
+
 
         $require = [
             'data' => [
                 'type' => 'checkout_session',
-                'description' => 'Onlineo Shopping Centre',
+                'description' => 'Online Shopping Centre',
                 'attributes' => [
-                    'line_items' => [
-                        [
-                            'name' => $product->prod_name,
-                            'quantity' => $product->prod_stock,
-                            'amount' => (int) $product->prod_price,
-                            'currency' => 'PHP',
-                            'description' => $product->prod_description,
-                        ],
-                        [
-                            'name' => $product->prod_name,
-                            'quantity' => $product->prod_stock,
-                            'amount' => (int) $product->prod_price,
-                            'currency' => 'PHP',
-                            'description' => $product->prod_description,
-                        ],
-                        [
-                            'name' => $product->prod_name,
-                            'quantity' => $product->prod_stock,
-                            'amount' => (int) $product->prod_price,
-                            'currency' => 'PHP',
-                            'description' => $product->prod_description,
-                        ],
-                    ],
+                    'line_items' => $lineItems,
                     'statement_descriptor' => 'Payment',
                     'payment_method_types' => ['gcash'],
                     'payment_method_allowed' => ['gcash'],
                     'metadata' => [
-                        'product-id' => $product->id,
+                        'product-id' => $product->id, // Moved inside the loop to get the correct product ID
                     ],
                 ],
             ],
@@ -118,17 +111,15 @@ class PaymentController extends Controller
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'accept' => 'application/json',
-            'authorization' => 'Basic ' . base64_encode(env('PAYMONGO_SECRET_KEY') . ':'),
+            'authorization' => 'Basic ' . base64_encode(env('PAYMONGO_SECRET_KEY')),
         ])->post('https://api.paymongo.com/v1/checkout_sessions', $require);
 
-        if ($response) {
+        if ($response->successful()) {  // Check for successful response using the 'successful' method
             return response()->json([
-                'checkout_url' => $response->json()['data']['attributes']['checkout_url']
+                'checkout_url' => $response->json()['data']['attributes']['checkout_url'],
+                'items' => $productsInsideMyCart,
             ], 200);
-
-            // if (isset($data['data']['attributes']['redirect']['checkout_url'])) {
-
-            // }
         }
     }
+
 }
