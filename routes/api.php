@@ -40,20 +40,17 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
 
 
-Route::get('/cart', [CartController::class, 'index']);
-Route::post('/cart', [CartController::class, 'store']);
-Route::put('/cart/{cart}', [CartController::class, 'update']);
-Route::delete('/cart/{cart}', [CartController::class, 'destroy']);
-Route::get('/my-cart/{id}', [CartController::class, 'getAllProductInCart']);
+
+
 
 // //Registration and Login 
 // Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/products', [ProductController::class, 'index']);
 //Public Routes
-Route::get('/category/search/{category_name}', [CategoryController::class, 'search']);
+Route::get('/category/{category_id}', [CategoryController::class, 'search']);
 Route::get('/category', [CategoryController::class, 'index']);
-Route::get('/category/{id}', [CategoryController::class, 'show']);
+// Route::get('/category/{id}', [CategoryController::class, 'show']);
 
 Route::get('/product', [ProductController::class, 'index']);
 Route::get('/product/{id}', [ProductController::class, 'show']);
@@ -64,7 +61,7 @@ Route::get('/review/{id}', [ReviewController::class, 'show']);
 Route::get('/review', [ReviewController::class, 'index']);
 
 
-
+Route::get('/my-cart/{id}', [CartController::class, 'getAllProductInCart']);
 //Protected Routes
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/category', [CategoryController::class, 'store']);
@@ -81,9 +78,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::delete('/product/{id}', [ProductController::class, 'destroy']);
 
+    Route::get('/cart', [CartController::class, 'index']);
 
-
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{cart}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     Route::post('/review', [ReviewController::class, 'store']);
+
     Route::delete('/review/{id}', [ReviewController::class, 'destroy']);
 
 

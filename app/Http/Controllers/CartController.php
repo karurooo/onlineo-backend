@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
@@ -35,38 +36,79 @@ class CartController extends Controller
             return response()->json($cartItem, 201);
         } catch (\Exception $e) {
             \Log::error($e->getMessage());
-            return response()->json(['error' => 'Server Error'], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    // public function update(Request $request, Cart $cartItem)
+    // {
+    //     try {
+    //         $user = $request->user();
+    //         $id = $request->id;
+    //         $cartItem = Cart::where('user_id', $user->id)->where('id', $id)->firstOrFail();
+
+    //         $validated = $request->validate([
+    //             'quantity' => 'required|numeric|min:1',
+    //             'prod_price' => 'sometimes|numeric',
+    //         ]);
+
+    //         $cartItem->quantity = $validated['quantity'];
+    //         if (isset($validated['prod_price'])) {
+    //             // Assuming you have a `price` field in your `carts` table
+    //             $cartItem->price = $validated['prod_price'];
+    //         }
+    //         $cartItem->save();
+
+    //         return response()->json($cartItem);
+    //     } catch (\Exception $e) {
+    //         \Log::error($e->getMessage());
+    //         return response()->json(['error' => 'An error occurred while updating the cart item'], 500);
+    //     }
+
+    // }
 
     public function update(Request $request, $id)
     {
-        $user = $request->user();
-        $cartItem = Cart::where('user_id', $user->id)->where('id', $id)->firstOrFail();
-
         $validated = $request->validate([
             'quantity' => 'required|numeric|min:1',
-            // If you also want to allow price updates, include it in validation
-            'prod_price' => 'sometimes|numeric',
+            // Include other fields that may need updating
         ]);
 
-        $cartItem->quantity = $validated['quantity'];
-        // If the price is included in the request, update it
-        if (isset($validated['prod_price'])) {
-            $cartItem->prod_price = $validated['prod_price'];
+        try {
+            // Find the cart item by ID for the authenticated user
+            $cartItem = Cart::where('id', $id)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            // Update the quantity
+            $cartItem->quantity = $validated['quantity'];
+            $cartItem->save();
+
+            return response()->json([
+                'message' => 'Cart item updated successfully',
+                'cartItem' => $cartItem
+            ], 200);
+
+        } catch (\Throwable $th) {
+            // Handle the exception
+            return response()->json(['error' => $th->getMessage()], 400);
         }
-        $cartItem->save();
-
-        return response()->json($cartItem);
     }
 
-
-    public function destroy(Cart $cart)
+    public function destroy($id) // Ensure the parameter name matches the route definition
     {
-        $cart->delete();
+        $userId = Auth::id(); // Get the authenticated user's ID
 
-        return response()->json(null, 204);
+        $cartItem = Cart::where('user_id', $userId)->where('id', $id)->first();
+
+        if ($cartItem) {
+            $cartItem->delete();
+            return response()->json(['message' => 'Cart item deleted successfully'], 200);
+        }
+
+        return response()->json(['error' => 'Cart item not found'], 404);
     }
+
 
     public function getAllProductInCart(string $user_id)
     {
