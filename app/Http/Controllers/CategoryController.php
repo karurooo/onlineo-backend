@@ -12,7 +12,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::with('products')->get();
         return response()->json($categories); // Return data as JSON
     }
 
@@ -26,6 +26,7 @@ class CategoryController extends Controller
     {
         $request->validate([
             'category_name' => 'required|unique:category',
+            'image_url' => 'nullable|url'
         ]);
 
         return Category::create($request->all());

@@ -67,10 +67,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/category', [CategoryController::class, 'store']);
     Route::delete('/category/{id}', [CategoryController::class, 'destroy']);
 
-    Route::get('/session-status', function () {
-        // If the user is authenticated, return a success status.
-        return response()->json(['status' => 'success']);
-    });
+    //create a route for the check session function in AuthController
+
+    // Route::get('/session-status', function () {
+    //     // If the user is authenticated, return a success status.
+    //     return response()->json(['status' => 'success']);
+    // });
+    Route::get('/check-session', [AuthController::class, 'checkSession']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::put('/product/{id}', [ProductController::class, 'update']);
@@ -102,7 +105,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::get('/purchases', [PurchaseController::class, 'index']);
 
-
+    Route::get('/pay/{id}', [PaymentController::class, 'payViaGcash']);
 });
 
-Route::get('/pay/{id}', [PaymentController::class, 'payViaGcash']);
+

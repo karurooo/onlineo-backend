@@ -13,12 +13,22 @@ class CartController extends Controller
         $userId = $request->user()->id;
         $cartItems = Cart::where('user_id', $userId)->with('product')->get();
 
-        return response()->json($cartItems);
+        // Calculate total
+        $total = 0;
+        foreach ($cartItems as $item) {
+            $total += $item->quantity * $item->product->price; // Ensure your Product model has a price field
+        }
+
+        // Return cart items and total
+        return response()->json([
+            'items' => $cartItems,
+            'total' => $total
+        ]);
     }
+
 
     public function store(Request $request)
     {
-
         try {
 
             $validated = $request->validate([
@@ -114,11 +124,21 @@ class CartController extends Controller
     {
         $cartItems = Cart::where('user_id', $user_id)->with('product')->get();
 
-        if (!$cartItems) {
+        if ($cartItems->isEmpty()) {
             return response()->json([
                 'message' => 'Cart is empty'
             ]);
         }
-        return response()->json($cartItems);
+
+        // Calculate total
+        $total = $cartItems->reduce(function ($carry, $item) {
+            return $carry + $item->quantity * $item->product->price; // Assume there's a price field in the Product model
+        }, 0);
+
+        return response()->json([
+            'items' => $cartItems,
+            'total' => $total
+        ]);
     }
+
 }

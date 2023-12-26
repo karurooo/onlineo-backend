@@ -115,6 +115,8 @@ class PaymentController extends Controller
         ])->post('https://api.paymongo.com/v1/checkout_sessions', $require);
 
         if ($response->successful()) {  // Check for successful response using the 'successful' method
+            //delete the cart
+            Cart::where('user_id', $user_id)->delete();
             return response()->json([
                 'checkout_url' => $response->json()['data']['attributes']['checkout_url'],
                 'items' => $productsInsideMyCart,
